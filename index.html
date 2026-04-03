@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>BusTicket Pro</title>
+
+
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+
+
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{font-family:Poppins;background:#eef2f7}
+
+
+
+/* HEADER */
+
+.header{
+
+  background:#0d1b2a;color:#fff;
+
+  padding:15px 30px;
+
+  display:flex;justify-content:space-between;
+
+}
+
+.header button{
+
+  background:#00b4d8;border:none;
+
+  padding:8px 12px;border-radius:8px;color:#fff;cursor:pointer;
+
+}
+
+
+
+/* HERO */
+
+.hero{
+
+  background:url('https://images.unsplash.com/photo-1570125909232-eb263c188f7e') center/cover;
+
+  color:#fff;text-align:center;padding:80px 20px;
+
+}
+
+
+
+/* SEARCH */
+
+.search{
+
+  background:#fff;margin:-40px auto 20px;
+
+  padding:20px;border-radius:20px;
+
+  width:90%;max-width:1000px;
+
+  display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+
+  box-shadow:0 10px 40px rgba(0,0,0,.1);
+
+}
+
+.search input,.search select{
+
+  padding:10px;border-radius:10px;border:1px solid #ddd
+
+}
+
+.search button{
+
+  background:#0072ff;color:#fff;border:none;padding:10px;border-radius:10px;
+
+}
+
+
+
+/* RESULTS */
+
+.results{max-width:1000px;margin:auto;padding:20px}
+
+
+
+/* TRIP */
+
+.trip{
+
+  background:#fff;margin:10px 0;border-radius:15px;
+
+  display:flex;gap:10px;
+
+  padding:10px;
+
+  box-shadow:0 10px 30px rgba(0,0,0,.1);
+
+}
+
+.trip img{width:120px;border-radius:10px}
+
+.price{color:green;font-weight:bold}
+
+
+
+/* SEAT */
+
+.seat-map{
+
+  display:grid;grid-template-columns:repeat(4,60px);
+
+  gap:10px;justify-content:center;margin:20px;
+
+}
+
+.seat{
+
+  width:60px;height:60px;background:#ddd;
+
+  border-radius:10px;line-height:60px;text-align:center;cursor:pointer;
+
+}
+
+.seat.selected{background:#0072ff;color:#fff}
+
+
+
+/* MODAL */
+
+.modal{
+
+  display:none;position:fixed;
+
+  top:0;left:0;right:0;bottom:0;
+
+  background:rgba(0,0,0,.5);
+
+}
+
+.modal-box{
+
+  background:#fff;padding:20px;margin:80px auto;
+
+  width:350px;border-radius:10px;text-align:center;
+
+}
+
+.modal input{width:100%;padding:8px;margin:5px 0}
+
+
+
+/* PAYMENT */
+
+.payment-box{
+
+  background:#fff;padding:20px;border-radius:15px;
+
+  text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.1);
+
+}
+
+
+
+/* TICKET */
+
+.ticket{
+
+  background:#fff;padding:15px;border-radius:15px;
+
+  margin:10px 0;box-shadow:0 10px 25px rgba(0,0,0,.1);
+
+  display:flex;justify-content:space-between;
+
+}
+
+.ticket button{
+
+  background:#ff4d4f;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;
+
+}
+
+</style>
+
+</head>
+
+
+
+<body>
+
+
+
+<header class="header">
+
+  <span>🚌 BusTicket Pro</span>
+
+  <button onclick="showTickets()">🎫 Vé của tôi</button>
+
+</header>
+
+
+
+<section class="hero">
+
+  <h1>Đặt vé xe nhanh chóng</h1>
+
+  <p style="margin-top:10px;font-size:18px;">
+
+    Nhanh chóng - Tiện lợi - An toàn
+
+  </p>
+
+</section>
+
+
+
+<div class="search">
+
+  <input id="from" placeholder="Điểm đón">
+
+  <input id="to" placeholder="Điểm đến">
+
+  <input type="date" id="date">
+
+  <select id="type">
+
+    <option value="all">Loại xe</option>
+
+    <option value="vip">Xe Bus</option>
+
+    <option value="limousine">Xe Limousine</option>
+
+  </select>
+
+  <button onclick="searchTrip()">Tìm chuyến</button>
+
+</div>
+
+
+
+<div id="results" class="results"></div>
+
+<div id="paymentPage" class="results" style="display:none;"></div>
+
+<div id="myTickets" class="results" style="display:none;"></div>
+
+
+
+<!-- MODAL -->
+
+<div id="modal" class="modal">
+
+  <div class="modal-box">
+
+    <h3>Đặt vé</h3>
+
+    <p id="info"></p>
+
+    <div id="seatArea"></div>
+
+    <input id="name" placeholder="Họ tên">
+
+    <input id="phone" placeholder="SĐT">
+
+    <button onclick="confirmBooking()">Tiếp tục thanh toán</button>
+
+    <button onclick="closeModal()">Huỷ</button>
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+let trips=[],currentTrip,seats=[],selected=[];
+
+
+
+/* SEARCH */
+
+function searchTrip(){
+
+  let from=document.getElementById("from").value;
+
+  let to=document.getElementById("to").value;
+
+  let date=document.getElementById("date").value;
+
+  let type=document.getElementById("type").value;
+
+
+
+  if(!from||!to||!date){alert("Nhập đủ!");return;}
+
+
+
+  trips=[];
+
+  for(let i=0;i<5;i++){
+
+    let ttype = i%2==0 ? "vip" : "limousine";
+
+    trips.push({
+
+      from,to,date,
+
+      time:7+i+":00",
+
+      price:200+i*50,
+
+      type:ttype,
+
+      img: ttype=="vip"
+
+        ? "https://static1.cafeland.vn/cafeautoData/upload/tintuc/thitruong/2021/07/tuan-04/tainanxebuyt354-1627633077.jpg"
+
+        : "https://dcar.com.vn/storage/tinymce/xe-limousine-10-cho-6-1.webp"
+
+    });
+
+  }
+
+
+
+  if(type!="all"){
+
+    trips=trips.filter(t=>t.type==type);
+
+  }
+
+
+
+  renderTrips();
+
+}
+
+
+
+/* RENDER */
+
+function renderTrips(){
+
+  let html="";
+
+  trips.forEach(t=>{
+
+    html+=`
+
+    <div class="trip">
+
+      <img src="${t.img}">
+
+      <div>
+
+        <h4>${t.from} → ${t.to}</h4>
+
+        <p>${t.date} | ${t.time}</p>
+
+        <p><b>Loại:</b> ${t.type.toUpperCase()}</p>
+
+        <p class="price">${t.price}k / ghế</p>
+
+        <button onclick='book(${JSON.stringify(t)})'>Đặt</button>
+
+      </div>
+
+    </div>`;
+
+  });
+
+  document.getElementById("results").innerHTML=html;
+
+}
+
+
+
+/* BOOK */
+
+function book(t){
+
+  currentTrip=t;
+
+  document.getElementById("modal").style.display="block";
+
+  document.getElementById("info").innerText=
+
+    `${t.from} → ${t.to} | ${t.price}k`;
+
+  initSeats();
+
+}
+
+
+
+/* SEAT */
+
+function initSeats(){
+
+  seats=[];selected=[];
+
+  let totalSeats = currentTrip.type==="vip"?16:12;
+
+  for(let i=1;i<=totalSeats;i++) seats.push(i);
+
+  renderSeats();
+
+}
+
+function renderSeats(){
+
+  let html='<div class="seat-map">';
+
+  seats.forEach(n=>{
+
+    html+=`<div class="seat ${selected.includes(n)?"selected":""}" onclick="selectSeat(${n})">${n}</div>`;
+
+  });
+
+  html+='</div>';
+
+  document.getElementById("seatArea").innerHTML=html;
+
+}
+
+function selectSeat(n){
+
+  selected.includes(n)?selected=selected.filter(x=>x!=n):selected.push(n);
+
+  renderSeats();
+
+}
+
+
+
+/* CONFIRM */
+
+function confirmBooking(){
+
+  let name=document.getElementById("name").value;
+
+  let phone=document.getElementById("phone").value;
+
+
+
+  if(!name||!phone||selected.length==0){
+
+    alert("Thiếu thông tin!");
+
+    return;
+
+  }
+
+
+
+  let total=currentTrip.price*selected.length;
+
+
+
+  localStorage.setItem("pendingTicket",JSON.stringify({
+
+    ...currentTrip,name,phone,seats:selected,total,id:Date.now()
+
+  }));
+
+
+
+  closeModal();
+
+  showPayment();
+
+}
+
+
+
+/* PAYMENT */
+
+function showPayment(){
+
+  document.getElementById("results").style.display="none";
+
+  document.getElementById("paymentPage").style.display="block";
+
+
+
+  let t=JSON.parse(localStorage.getItem("pendingTicket"));
+
+  let content="BANK ĐI CÒN CHỜ CHI";
+
+
+
+  document.getElementById("paymentPage").innerHTML=`
+
+    <div class="payment-box">
+
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/25/Logo_MB_new.png" style="width:80px">
+
+      <h2 style="color:#0033A0;">MB Bank</h2>
+
+      <h1 style="color:red;">${t.total}.000đ</h1>
+
+      <img src="https://i.postimg.cc/tJ2wG8ZH/Anh-chup-man-hinh-2026-03-31-190534.png" style="width:220px;margin:10px 0;">
+
+      <p>STK: 0833875468</p>
+
+      <p>ANH KHOA</p>
+
+      <div style="background:#eee;padding:8px;border-radius:8px;">
+
+        <span id="copyText">${content}</span>
+
+        <button onclick="copyContent()">Copy</button>
+
+      </div>
+
+      <p id="status" style="color:orange;">⏳ Đang chờ thanh toán...</p>
+
+      <button onclick="completePayment()">Tôi đã thanh toán</button>
+
+      <br><br>
+
+      <button onclick="backHome()">Huỷ</button>
+
+    </div>`;
+
+
+
+  setTimeout(()=>{
+
+    let s=document.getElementById("status");
+
+    if(s){s.innerHTML="✅ Đã nhận tiền"; s.style.color="green";}
+
+  },5000);
+
+}
+
+
+
+/* COPY */
+
+function copyContent(){
+
+  navigator.clipboard.writeText(document.getElementById("copyText").innerText);
+
+  alert("Đã copy!");
+
+}
+
+
+
+/* COMPLETE */
+
+function completePayment(){
+
+  let t=JSON.parse(localStorage.getItem("pendingTicket"));
+
+  let data=JSON.parse(localStorage.getItem("tickets")||"[]");
+
+  data.push(t);
+
+  localStorage.setItem("tickets",JSON.stringify(data));
+
+  localStorage.removeItem("pendingTicket");
+
+  alert("Thanh toán thành công!");
+
+  showTickets();
+
+}
+
+
+
+/* TICKETS */
+
+function showTickets(){
+
+  document.getElementById("results").style.display="none";
+
+  document.getElementById("paymentPage").style.display="none";
+
+  document.getElementById("myTickets").style.display="block";
+
+
+
+  let data=JSON.parse(localStorage.getItem("tickets")||"[]");
+
+
+
+  let html="<h2>🎫 Vé của tôi</h2><button onclick='backHome()'>⬅ Quay về</button>";
+
+
+
+  data.forEach(t=>{
+
+    html+=`
+
+    <div class="ticket">
+
+      <div>
+
+        <h3>${t.from} → ${t.to}</h3>
+
+        <p>${t.date} | ${t.time}</p>
+
+        <p>Loại: ${t.type}</p>
+
+        <p>Ghế: ${t.seats.join(", ")}</p>
+
+        <p>${t.total}k</p>
+
+      </div>
+
+      <button onclick="cancelTicket(${t.id})">Huỷ</button>
+
+    </div>`;
+
+  });
+
+
+
+  document.getElementById("myTickets").innerHTML=html;
+
+}
+
+
+
+/* CANCEL */
+
+function cancelTicket(id){
+
+  if(!confirm("Bạn có chắc muốn hủy vé này?")) return;
+
+  let data=JSON.parse(localStorage.getItem("tickets")||"[]");
+
+  data=data.filter(t=>t.id!=id);
+
+  localStorage.setItem("tickets",JSON.stringify(data));
+
+  showTickets();
+
+}
+
+
+
+/* BACK */
+
+function backHome(){
+
+  document.getElementById("results").style.display="block";
+
+  document.getElementById("paymentPage").style.display="none";
+
+  document.getElementById("myTickets").style.display="none";
+
+}
+
+
+
+/* CLOSE */
+
+function closeModal(){
+
+  document.getElementById("modal").style.display="none";
+
+}
+
+</script>
+
+
+
+</body>
+
+</html>
